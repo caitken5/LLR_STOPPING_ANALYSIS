@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+from scipy import signal
 
 data_header = ['Time', 'Des_X_Pos', 'Des_Y_Pos', 'X_Pos', 'Y_Pos', 'OptoForce_X', 'OptoForce_Y', 'OptoForce_Z',
                'OptoForce_Z_Torque', 'Theta_1', 'Theta_2', 'Fxy_Mag', 'Fxy_Angle', 'CorrForce_X', 'Corr_Force_Y',
@@ -37,3 +38,24 @@ def get_task_number(file_name):
         my_str = "Task name wasn't found, file_name: " + file_name + ", exiting program."
         sys.exit(my_str)
     return task
+
+
+def delete_multiple_element(list_object, indices):
+    # This code was obtained from https://thispointer.com/python-remove-elements-from-list-by-index/
+    indices = sorted(indices, reverse=True)
+    for idx in indices:
+        if idx < len(list_object):
+            list_object.pop(idx)
+
+
+def butterworth_filter(data):
+    # 2nd order 50 Hz Butterworth filter applied along the time series dimension of as many columns are passed to it.
+    # Will likely just be used to filter the velocity data, since a second order 20Hz Butterworth filter has already
+    # been applied to the force data.
+    sos = signal.butter(2, 50, 'lowpass', fs=1000, output='sos')
+    # Frequency was selected to smooth the signal so there are no accidental spikes in data when a person has actually
+    # stopped, but not so that it changes the shape of the signal, which if too low makes it difficult to
+    # identify stopping regions.
+    # Since fs is specified, set the cutoff filter to 20 Hz.
+    filtered_data = signal.sosfiltfilt(sos, data, axis=0)
+    return filtered_data
