@@ -14,7 +14,7 @@ storage_name = "D:/PD_Participant_Data/LLR_DATA_ANALYSIS_CLEANED/LLR_DATA_PROCES
 testing = False
 make_graphs = False
 # TODO: Play with vel_limit and stop_limit to confirm these are good indicators of a person stopping movement.
-#  I think the threshold is a little low right now.
+#  I think the threshold is a little low right now. Play with dist_limit, 10 might be too high.
 vel_limit = 0.00025  # Chosen to account for minor noise in signal but also to select regions of data in which a user
 # may have stopped during a movement.
 stop_limit = 10  # The least number of acceptable absolute values below vel_limit in the time series "dd" that
@@ -58,7 +58,7 @@ if __name__ == '__main__':
                     total_time_stopped = 0
                     num_stops = 0
                     if len(stop_list) > 0:
-                        total_time_stopped = h.total_time_stopped(stop_list, dt)  # Returns total amount of time
+                        total_time_stopped = h.time_stopped(stop_list, dt)  # Returns total amount of time
                         # stopped in seconds.
                         num_stops = h.num_stops(stop_list)
                     # TODO: Generate function to calculate time spent paused within reach of target.
@@ -67,8 +67,27 @@ if __name__ == '__main__':
                     # TODO: Design function that, if a reaction time exists, and so does stopped_time, returns a value
                     #  that corresponds to the amount of time stopped before the reaction occurs, and amount of time
                     #  stopped after the reaction occurs. Returns a None value if doesn't occur before or after.
+                    stop_before = []
+                    stop_after = []  # Need to ensure these elements are empty arrays so that if they are referenced
+                    # later I don't run into errors where the don't exist.
+                    stop_time_before = None
+                    stop_time_after = None
+                    avg_dist_after = None
                     if (reaction_row is not None) & (num_stops != 0):
                         stop_before, stop_after = h.stopped_before_after_reaction(stop_list, reaction_row)
+                        if len(stop_before) > 0:
+                            stop_time_before = h.time_stopped(stop_before, dt)
+                        if len(stop_after) > 0:
+                            stop_time_after = h.time_stopped(stop_after, dt)
+                            avg_dist_after = h.avg_dist_stopped(stop_after, d)
+                    # Here is the code for calculating if a person stopped within the selected target range,
+                    # how much time was spent there, and how many stops occurred within that region.
+                    time_stopped_within = None
+                    times_stopped_within = None
+                    if num_stops != 0:
+                        stopped_within = h.stopped_within_target(stop_list, d, dist_limit)
+                        time_stopped_within = h.time_stopped(stopped_within, dt)
+                        times_stopped_within = h.num_stops(stopped_within)
                     if len(stop_list) > 0:
                         for j in range(len(stop_list)):
                             t1 = t[stop_list[j][0]]

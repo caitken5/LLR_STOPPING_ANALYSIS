@@ -93,7 +93,7 @@ def calculate_stops(v, vel_limit, stop_limit):
     return stop_list
 
 
-def total_time_stopped(stop_list, dt):
+def time_stopped(stop_list, dt):
     # This function calculates the total amount of time spent stopped during the reaching motion.
     total_time = 0
     for i in range(len(stop_list)):
@@ -121,24 +121,16 @@ def num_stops(stop_list):
     return len(stop_list)
 
 
-#def time_stopped_within_target(stop_list, dt, dist_limit):
-    # This function calculates the amount of time that a user is stopped close to or near the target.
-
-
-#def times_stopped_within_target(stop_list, dist_limit):
-    # This function calculates the number of times that a user is stopped within the dist_limit.
-
-
-#def time_stopped_before_reaction(stop_list, dt):
-    # This function calculates the amount of time in each reach that a user is stopped before reacting to the target.
-
-
-#def time_stopped_after_reaction(stop_list, dt):
-    # This function calculates the amount of time in each reach thatt a user is stopped after reaction to the target.
-
-
-#def avg_dist_after_reaction(stop_list, dist_from_target):
+def avg_dist_stopped(stop_list, dist_from_target):
     # This function calculates the average distance after the reaction has occurred at which a user is stopped.
+    my_list = []
+    for i in range(len(stop_list)):
+        for j in range(stop_list[i].shape[0]):
+            my_list.append(stop_list[i][j])
+    # Use the total list of indices after reaction time to get values from dist_from_target.
+    avg_dist_after_list = dist_from_target[my_list]
+    avg_dist_after = np.mean(avg_dist_after_list)
+    return avg_dist_after
 
 
 def stopped_before_after_reaction(stop_list, reaction_row):
@@ -154,3 +146,13 @@ def stopped_before_after_reaction(stop_list, reaction_row):
         else:
             stop_after.append(stop_list[i])
     return stop_before, stop_after
+
+
+def stopped_within_target(stop_list, dist_from_target, dist_limit):
+    # This function returns the array of samples of distances if they occur within a desigated stoppe distance.
+    stopped_within = []
+    for i in range(len(stop_list)):
+        avg_dist = np.mean(dist_from_target[stop_list[i]])
+        if avg_dist < dist_limit:
+            stopped_within.append(stop_list[i])
+    return stopped_within
