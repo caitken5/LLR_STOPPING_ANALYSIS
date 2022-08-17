@@ -12,12 +12,15 @@ storage_name = "D:/PD_Participant_Data/LLR_DATA_ANALYSIS_CLEANED/LLR_DATA_PROCES
                "STOPPING_REGIONS"
 
 testing = False
+make_graphs = False
 # TODO: Play with vel_limit and stop_limit to confirm these are good indicators of a person stopping movement.
 #  I think the threshold is a little low right now.
 vel_limit = 0.00025  # Chosen to account for minor noise in signal but also to select regions of data in which a user
 # may have stopped during a movement.
 stop_limit = 10  # The least number of acceptable absolute values below vel_limit in the time series "dd" that
 # represents a stop. Used to exclude regions where one slows to immediately start another motion.
+dt = 0.01  # The period between each sample obtained from the robot.
+dist_limit = 10  # This represents the number of mm in radius around the target in which a pause occurs.
 
 if __name__ == '__main__':
     print("Running frequency analysis...")
@@ -51,34 +54,21 @@ if __name__ == '__main__':
                     ax1.plot(t, dv*10, label="Acceleration of Robot [mm/s]*10")
                     ax1.plot(t, v*100, label="Absolute Velocity of Robot [mm/s]*100")
                     # Identify points of the velocity of distance from target (DfT) below selected threshold.
-                    # TODO: Convert the stopping criteria into a function so that it is simplified when transferred to
-                    #  LLR_DATA_ANALYSIS code.
-                    stops = np.asarray(np.nonzero((v < vel_limit) & (v > -vel_limit)))[0]  # This corresponds to the
-                    # indices of elements where a stop occurs.
-                    temp = []
-                    stop_list = []
-                    if stops.shape[0] != 0:
-                        for j, k in enumerate(stops):  # Append all the values as new arrays to the stop_list.
-                            # Does not yet deal if arrays are below a certain size.
-                            temp.append(k)
-                            if k == stops[-1]:
-                                arr = np.asarray(temp)
-                                stop_list.append(arr)
-                            elif (stops[j+1] - k) > 1:
-                                arr = np.asarray(temp)
-                                stop_list.append(arr)
-                                temp = []
-                        # As long as stops has some length, the above code will result in the stop_list containing some information.
-                        # Now remove arrays from stop_list that are not greater than number of samples specified in stop_limit.
-                        remove_list = []  # Used to append values to then remove values from stop_list all at once.
-                        for j in range(len(stop_list)):
-                            len_stop = stop_list[j].shape[0]
-                            if len_stop < stop_limit:
-                                # Add element to remove_list.
-                                remove_list.append(j)
-                        if len(remove_list) > 0:
-                            # If remove_list is empty, this below function would probably remove the final element, or some kind of error.
-                            h.delete_multiple_element(stop_list, remove_list)
+                    stop_list = h.calculate_stops(v, vel_limit, stop_limit)
+                    total_time_stopped = 0
+                    num_stops = 0
+                    if len(stop_list) > 0:
+                        total_time_stopped = h.total_time_stopped(stop_list, dt)  # Returns total amount of time
+                        # stopped in seconds.
+                        num_stops = h.num_stops(stop_list)
+                    # TODO: Generate function to calculate time spent paused within reach of target.
+                    reaction_row = h.reaction_time(d)  # Indicates the row in the series that corresponds to the
+                    # beginning of the reaction time.
+                    # TODO: Design function that, if a reaction time exists, and so does stopped_time, returns a value
+                    #  that corresponds to the amount of time stopped before the reaction occurs, and amount of time
+                    #  stopped after the reaction occurs. Returns a None value if doesn't occur before or after.
+                    if (reaction_row is not None) & (num_stops != 0):
+                        stop_before, stop_after = h.stopped_before_after_reaction(stop_list, reaction_row)
                     if len(stop_list) > 0:
                         for j in range(len(stop_list)):
                             t1 = t[stop_list[j][0]]
@@ -92,10 +82,10 @@ if __name__ == '__main__':
                                   " \n Using Absolute Distance from Target, Velocity, and It's Derivatives")
                     plt.legend()
                     save_str = storage_name + '/' + file_name + "_" + str(i)
-                    if testing:
+                    if testing & make_graphs:
                         plt.show()
                         plt.close()
-                    else:
+                    elif make_graphs:
                         plt.savefig(fname=save_str)
                         fig.clf()
                         gc.collect()
