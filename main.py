@@ -11,12 +11,12 @@ source_folder = "D:/PD_Participant_Data/LLR_DATA_ANALYSIS_CLEANED/LLR_DATA_PROCE
 storage_name = "D:/PD_Participant_Data/LLR_DATA_ANALYSIS_CLEANED/LLR_DATA_PROCESSING_PIPELINE/7_LLR_STOPPING_GRAPHS/" \
                "STOPPING_REGIONS"
 
-testing = False
-make_graphs = False
-# TODO: Play with vel_limit and stop_limit to confirm these are good indicators of a person stopping movement.
-#  I think the threshold is a little low right now. Play with dist_limit, 10 might be too high.
+testing = True
+make_graphs = True
+#  TODO: I think the threshold is a little low right now. Play with dist_limit, 10 might be too high.
 vel_limit = 0.00025  # Chosen to account for minor noise in signal but also to select regions of data in which a user
 # may have stopped during a movement.
+# Pretty sure this vel_limit might be okay though.
 stop_limit = 10  # The least number of acceptable absolute values below vel_limit in the time series "dd" that
 # represents a stop. Used to exclude regions where one slows to immediately start another motion.
 dt = 0.01  # The period between each sample obtained from the robot.
@@ -44,11 +44,13 @@ if __name__ == '__main__':
                     v = h.butterworth_filter(v_unfilt)
                     dv = np.gradient(v)
                     d = stuff[:, h.data_header.index("Dist_From_Target")]
+                    f = stuff[:, h.data_header.index("Fxy_Mag")]
                     # Plotting of data here
                     fig = plt.figure(num=1, dpi=100, facecolor='w', edgecolor='w')
                     fig.set_size_inches(25, 8)
                     ax1 = fig.add_subplot(111)
                     ax1.grid(visible=True)
+                    ax1.plot(t, f, label="Force [N]")
                     ax1.plot(t, v_unfilt*100, label="Unfiltered Absolute Velocity of Robot [mm/s]*100")
                     ax1.plot(t, d/10, label="Distance from Target (DfT) [cm]")
                     ax1.plot(t, dv*10, label="Acceleration of Robot [mm/s]*10")
@@ -61,12 +63,8 @@ if __name__ == '__main__':
                         total_time_stopped = h.time_stopped(stop_list, dt)  # Returns total amount of time
                         # stopped in seconds.
                         num_stops = h.num_stops(stop_list)
-                    # TODO: Generate function to calculate time spent paused within reach of target.
                     reaction_row = h.reaction_time(d)  # Indicates the row in the series that corresponds to the
                     # beginning of the reaction time.
-                    # TODO: Design function that, if a reaction time exists, and so does stopped_time, returns a value
-                    #  that corresponds to the amount of time stopped before the reaction occurs, and amount of time
-                    #  stopped after the reaction occurs. Returns a None value if doesn't occur before or after.
                     stop_before = []
                     stop_after = []  # Need to ensure these elements are empty arrays so that if they are referenced
                     # later I don't run into errors where the don't exist.
