@@ -11,13 +11,12 @@ source_folder = "D:/PD_Participant_Data/LLR_DATA_ANALYSIS_CLEANED/LLR_DATA_PROCE
 storage_name = "D:/PD_Participant_Data/LLR_DATA_ANALYSIS_CLEANED/LLR_DATA_PROCESSING_PIPELINE/7_LLR_STOPPING_GRAPHS/" \
                "STOPPING_REGIONS"
 
-testing = True
+testing = False
 make_graphs = True
-#  TODO: I think the threshold is a little low right now. Play with dist_limit, 10 might be too high.
-vel_limit = 0.00025  # Chosen to account for minor noise in signal but also to select regions of data in which a user
+vel_limit = 0.0002  # Chosen to account for minor noise in signal but also to select regions of data in which a user
 # may have stopped during a movement.
 # Pretty sure this vel_limit might be okay though.
-stop_limit = 10  # The least number of acceptable absolute values below vel_limit in the time series "dd" that
+stop_limit = 20  # The least number of acceptable absolute values below vel_limit in the time series "dd" that
 # represents a stop. Used to exclude regions where one slows to immediately start another motion.
 dt = 0.01  # The period between each sample obtained from the robot.
 dist_limit = 10  # This represents the number of mm in radius around the target in which a pause occurs.
@@ -51,10 +50,9 @@ if __name__ == '__main__':
                     ax1 = fig.add_subplot(111)
                     ax1.grid(visible=True)
                     ax1.plot(t, f, label="Force [N]")
-                    ax1.plot(t, v_unfilt*100, label="Unfiltered Absolute Velocity of Robot [mm/s]*100")
                     ax1.plot(t, d/10, label="Distance from Target (DfT) [cm]")
-                    ax1.plot(t, dv*10, label="Acceleration of Robot [mm/s]*10")
-                    ax1.plot(t, v*100, label="Absolute Velocity of Robot [mm/s]*100")
+                    ax1.plot(t, dv*10, label="Acceleration of Robot / 10 [cm/s^2]")
+                    ax1.plot(t, v*100, label="Absolute Velocity of Robot [cm/s]")
                     # Identify points of the velocity of distance from target (DfT) below selected threshold.
                     stop_list = h.calculate_stops(v, vel_limit, stop_limit)
                     total_time_stopped = 0
