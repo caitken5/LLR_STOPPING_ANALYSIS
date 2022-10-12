@@ -21,7 +21,6 @@ stop_limit = 20  # The least number of acceptable absolute values below vel_limi
 dt = 0.01  # The period between each sample obtained from the robot.
 dist_limit = 10  # This represents the number of mm in radius around the target in which a pause occurs.
 
-# TODO: Change code here to make the graphs black and white, exclude data that is not required, and make sure fonts are good sizes.
 # Create some variables for controlling the font size.
 SMALLER_SIZE = 10
 SMALL_SIZE = 18
