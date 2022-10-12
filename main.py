@@ -9,7 +9,7 @@ import header as h
 source_folder = "D:/PD_Participant_Data/LLR_DATA_ANALYSIS_CLEANED/LLR_DATA_PROCESSING_PIPELINE/" \
                 "4_LLR_DATA_SEGMENTATION/NPZ_FILES_BY_TARGET"
 storage_name = "D:/PD_Participant_Data/LLR_DATA_ANALYSIS_CLEANED/LLR_DATA_PROCESSING_PIPELINE/7_LLR_STOPPING_GRAPHS/" \
-               "STOPPING_REGIONS"
+               "STOPPING_REGIONS_BLACK_AND_WHITE"
 
 testing = False
 make_graphs = True
@@ -20,6 +20,18 @@ stop_limit = 20  # The least number of acceptable absolute values below vel_limi
 # represents a stop. Used to exclude regions where one slows to immediately start another motion.
 dt = 0.01  # The period between each sample obtained from the robot.
 dist_limit = 10  # This represents the number of mm in radius around the target in which a pause occurs.
+
+# TODO: Change code here to make the graphs black and white, exclude data that is not required, and make sure fonts are good sizes.
+# Create some variables for controlling the font size.
+SMALLER_SIZE = 10
+SMALL_SIZE = 18
+
+# Change the sizes for specific features of plots accordingly.
+plt.rc('axes', labelsize=SMALL_SIZE)
+plt.rc('legend', fontsize=SMALL_SIZE)
+plt.rc('xtick', labelsize=SMALLER_SIZE)
+plt.rc('ytick', labelsize=SMALLER_SIZE)
+
 
 if __name__ == '__main__':
     print("Running frequency analysis...")
@@ -46,13 +58,13 @@ if __name__ == '__main__':
                     f = stuff[:, h.data_header.index("Fxy_Mag")]
                     # Plotting of data here
                     fig = plt.figure(num=1, dpi=100, facecolor='w', edgecolor='w')
-                    fig.set_size_inches(25, 8)
+                    fig.set_size_inches(15, 8)
                     ax1 = fig.add_subplot(111)
                     ax1.grid(visible=True)
-                    ax1.plot(t, f, label="Force [N]")
-                    ax1.plot(t, d/10, label="Distance from Target (DfT) [cm]")
-                    ax1.plot(t, dv*10, label="Acceleration of Robot / 10 [cm/s^2]")
-                    ax1.plot(t, v*100, label="Absolute Velocity of Robot [cm/s]")
+                    # ax1.plot(t, f, 'k-', label="Force [N]")
+                    ax1.plot(t, d/10, 'k-', label="Distance from Target [cm]")
+                    # ax1.plot(t, dv*10, label="Acceleration of Robot / 10 [cm/$s^2$]")
+                    ax1.plot(t, v*100, 'k:', label="Absolute Velocity [cm/s]")
                     # Identify points of the velocity of distance from target (DfT) below selected threshold.
                     stop_list = h.calculate_stops(v, vel_limit, stop_limit)
                     total_time_stopped = 0
@@ -88,13 +100,16 @@ if __name__ == '__main__':
                         for j in range(len(stop_list)):
                             t1 = t[stop_list[j][0]]
                             t2 = t[stop_list[j][-1]]
-                            ax1.axvspan(t1, t2, color='orange', alpha=0.5)
+                            if j == 1:
+                                ax1.axvspan(t1, t2, color='grey', alpha=0.5, label="Stopping Region")
+                            else:
+                                ax1.axvspan(t1, t2, color='grey', alpha=0.5)
                     # Set some labels.
                     file_name = file.split('.')[0]
                     ax1.set_xlabel("Time [s]")
                     ax1.set_ylabel("Magnitude")
-                    ax1.set_title("Identifying Potential Stopping Points for Sample " + file_name + "_" + str(i) +
-                                  " \n Using Absolute Distance from Target, Velocity, and It's Derivatives")
+                    # ax1.set_title("Identifying Potential Stopping Points for Sample " + file_name + "_" + str(i) +
+                    #              " \n Using Absolute Distance from Target, Velocity, and It's Derivatives")
                     plt.legend()
                     save_str = storage_name + '/' + file_name + "_" + str(i)
                     if testing & make_graphs:
